@@ -15,7 +15,7 @@ const onFormSubmitted = (data) => {
 
 const onPostSubmitted = (data) => {
   poste.value = data.poste;
-  alert(poste.value + date.value + prenom.value)
+  // alert(poste.value + date.value + prenom.value)
 }
 
 </script>
@@ -28,8 +28,10 @@ const onPostSubmitted = (data) => {
     <div v-else-if="!poste">
       <Question1 @formSubmitted="onPostSubmitted"/>
     </div>
-    <div v-else>
-      <h1>question2</h1>
+    <div v-else-if="poste || date || prenom">
+      <h1>{{date}}</h1>
+      <h1>{{prenom}}</h1>
+      <h1>{{poste}}</h1>
     </div>
   </div>
 </template>

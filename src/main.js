@@ -1,5 +1,5 @@
 
 import { createApp } from 'vue'
-import App from './App.vue'
+import Future from "./Future.vue";
 
-createApp(App).mount('#app')
+createApp(Future).mount("#app");
