@@ -1,7 +1,16 @@
 <template>
   <div>
+    <!-- Surveyor Name Input -->
+     <div v-if="currentQuestionIndex === -1 && !isSurveyComplete">
+      <form @submit.prevent="startSurvey">
+        <label for="surveyorName">Nom de l'enquêteur:</label>
+        <input type="text" id="surveyorName" v-model="surveyorName">
+        <button type="submit">Commencer le Questionnaire</button>
+      </form>
+    </div>
+
     <!-- Questions Section -->
-    <div v-if="currentQuestionIndex < questions.length">
+    <div v-if="currentQuestionIndex >= 0 && currentQuestionIndex < questions.length && !isSurveyComplete">
       <div>{{ questions[currentQuestionIndex].text }}</div>
       <select v-model="selectedOption">
         <option disabled value="">-- select an option --</option>
@@ -16,13 +25,14 @@
     </div>
 
     <!-- Responses Summary Table -->
-    <div v-else>
-      <div>Questionnaire terminé. réponses:</div>
-      <button @click="downloadAsCSV">Telecharger Excel</button>
-      <button @click="startNewSet">Demarrer nouveau Questionnaire</button>
+    <div v-if="isSurveyComplete">
+      <div>Questionnaire terminé. Réponses:</div>
+      <button @click="downloadAsCSV">Télécharger Excel</button>
+      <button @click="startNewSet">Démarrer nouveau questionnaire</button>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref } from 'vue';
@@ -37,8 +47,10 @@ const questions = ref([
   // Add more questions as needed
 ]);
 
+
+const surveyorName = ref('');
 // Current question index
-const currentQuestionIndex = ref(0);
+const currentQuestionIndex = ref(-1);
 
 // Array to store responses for the current set
 const responses = ref([]);
@@ -53,48 +65,58 @@ const selectedOption = ref(null);
 const startTime = ref(null);
 const finishTime = ref(null);
 
-// Submit response and move to next question
-const submitResponse = () => {
-  if (selectedOption.value !== null) {
-    // Record start time at the first response
-    if (currentQuestionIndex.value === 0 && !startTime.value) {
-      startTime.value = new Date();
-    }
+const isSurveyComplete = ref(false); // New state variable
 
-    responses.value[currentQuestionIndex.value] = selectedOption.value;
-
-    if (currentQuestionIndex.value === questions.value.length - 1) {
-      finishTime.value = new Date(); // Record finish time
-      allResponses.value.push({
-        responses: [...responses.value],
-        startTime: startTime.value,
-        finishTime: finishTime.value
-      });
-      responses.value = []; // Reset responses for next set
-      startTime.value = null; // Reset start time for next set
-    }
-
-    currentQuestionIndex.value++;
-    selectedOption.value = null; // Reset for next question
+const startSurvey = () => {
+  if (surveyorName.value) {
+    currentQuestionIndex.value = 0;
+    startTime.value = new Date();
+    isSurveyComplete.value = false; // Reset survey completion state
+  } else {
+    alert('Veuillez entrer le nom de l’enquêteur.');
   }
 };
 
-// Start a new set of questions
-const startNewSet = () => {
-  currentQuestionIndex.value = 0;
-  startTime.value = null; // Reset start time
-  finishTime.value = null; // Reset finish time
+// Submit response and move to next question
+const submitResponse = () => {
+  if (selectedOption.value !== null) {
+    responses.value[currentQuestionIndex.value] = selectedOption.value;
+    if (currentQuestionIndex.value === questions.value.length - 1) {
+      finishTime.value = new Date();
+      allResponses.value.push({
+        surveyor: surveyorName.value,
+        startTime: startTime.value,
+        responses: [...responses.value],
+        finishTime: finishTime.value
+      });
+      responses.value = [];
+      isSurveyComplete.value = true; // Set survey completion state
+      selectedOption.value = null;
+    } else {
+      currentQuestionIndex.value++;
+      selectedOption.value = null;
+    }
+  }
 };
 
-// Navigate back to the previous question
+const startNewSet = () => {
+  currentQuestionIndex.value = -1;
+  startTime.value = null;
+  finishTime.value = null;
+  responses.value = [];
+  surveyorName.value = '';
+  isSurveyComplete.value = false; // Reset survey completion state
+};
+
 const prevQuestion = () => {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--;
   }
 };
+
 const downloadAsCSV = () => {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += 'Ordre,Date,Heure Début,';
+  csvContent += 'Ordre,Nom de l’enquêteur,Date,Heure Début,';
   questions.value.forEach((question, index) => {
     csvContent += `"${question.text}"${index < questions.value.length - 1 ? ',' : ''}`;
   });
@@ -112,8 +134,8 @@ const downloadAsCSV = () => {
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
   };
 
-  allResponses.value.forEach((set, setIndex) => {
-    csvContent += `${setIndex + 1},"${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
+      allResponses.value.forEach((set, setIndex) => {
+    csvContent += `${setIndex + 1},"${set.surveyor}","${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
     set.responses.forEach((response, qIndex) => {
       csvContent += `"${questions.value[qIndex].options[response]}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
     });
@@ -123,7 +145,7 @@ const downloadAsCSV = () => {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', 'responses.csv');
+  link.setAttribute('download', 'ODCaen.csv');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
