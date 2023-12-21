@@ -19,7 +19,7 @@
     <div v-else>
       <div>Questionnaire terminé. réponses:</div>
       <button @click="downloadAsCSV">Telecharger Excel</button>
-      <button @click="startNewSet">Demarrer nouveau questionnaire</button>
+      <button @click="startNewSet">Demarrer nouveau Questionnaire</button>
     </div>
   </div>
 </template>
@@ -94,38 +94,37 @@ const prevQuestion = () => {
 };
 const downloadAsCSV = () => {
   let csvContent = 'data:text/csv;charset=utf-8,';
-
-  // Add header row with time columns and question texts
-  csvContent += 'Ordre,Heure Début,';
+  csvContent += 'Ordre,Date,Heure Début,';
   questions.value.forEach((question, index) => {
     csvContent += `"${question.text}"${index < questions.value.length - 1 ? ',' : ''}`;
   });
   csvContent += ',Heure Fin\r\n';
 
-  // Function to format time to hours, minutes, and seconds
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
+  };
+
   const formatTime = (date) => {
     if (!date) return '';
     const d = new Date(date);
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
   };
 
-  // Add rows for each response set
   allResponses.value.forEach((set, setIndex) => {
-    // Include set number and formatted start time
-    csvContent += `${setIndex + 1},"${formatTime(set.startTime)}",`;
-    questions.value.forEach((_, qIndex) => {
-      csvContent += `"${questions.value[qIndex].options[set.responses[qIndex]]}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
+    csvContent += `${setIndex + 1},"${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
+    set.responses.forEach((response, qIndex) => {
+      csvContent += `"${questions.value[qIndex].options[response]}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
     });
-    // Include formatted finish time at the end
-    csvContent += `,"${formatTime(set.finishTime)}"`;
-    csvContent += '\r\n';
+    csvContent += `,"${formatTime(set.finishTime)}"\r\n`;
   });
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
   link.setAttribute('download', 'responses.csv');
-  document.body.appendChild(link); // Required for Firefox
+  document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
