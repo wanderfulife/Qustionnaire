@@ -11,41 +11,15 @@
           {{ option }}
         </option>
       </select>
-      <button @click="submitResponse">Next</button>
-      <button v-if="currentQuestionIndex > 0" @click="prevQuestion">Return</button>
+      <button @click="submitResponse">Suivant</button>
+      <button v-if="currentQuestionIndex > 0" @click="prevQuestion">Retour</button>
     </div>
 
     <!-- Responses Summary Table -->
     <div v-else>
-      <div>All questions answered for this set. See cumulative responses below:</div>
-      <table>
-        <tr>
-          <th>Set</th>
-          <th>Question</th>
-          <th>Response</th>
-          <th>Start Time</th>
-          <th>Finish Time</th>
-        </tr>
-        <tr v-for="(set, setIndex) in allResponses" :key="setIndex">
-          <td rowspan="{{ questions.length }}">{{ setIndex + 1 }}</td>
-          <td v-for="(response, index) in set.responses" :key="index">
-            <template v-if="index === 0">
-              <td>{{ questions[index].text }}</td>
-              <td>{{ questions[index].options[response] }}</td>
-              <td>{{ new Date(set.startTime).toLocaleString() }}</td>
-              <td>{{ new Date(set.finishTime).toLocaleString() }}</td>
-            </template>
-            <template v-else>
-              <tr>
-                <td>{{ questions[index].text }}</td>
-                <td>{{ questions[index].options[response] }}</td>
-              </tr>
-            </template>
-          </td>
-        </tr>
-      </table>
-      <button @click="downloadAsCSV">Download as CSV</button>
-      <button @click="startNewSet">Start New Set of Questions</button>
+      <div>Questionnaire terminé. réponses:</div>
+      <button @click="downloadAsCSV">Telecharger Excel</button>
+      <button @click="startNewSet">Demarrer nouveau questionnaire</button>
     </div>
   </div>
 </template>
@@ -155,12 +129,6 @@ const downloadAsCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
-
-
-
-
-
-
 </script>
 
 
@@ -174,13 +142,6 @@ const downloadAsCSV = () => {
   font-weight: bold;
 }
 
-input {
-  border: 0;
-  outline: 0;
-	color: grey;
-}
-.container {
-  display: flex;
-}
+
 
 </style>
