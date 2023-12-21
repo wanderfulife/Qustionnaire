@@ -13,20 +13,20 @@
     <div v-if="currentQuestionIndex >= 0 && currentQuestionIndex < questions.length && !isSurveyComplete">
       <div>{{ questions[currentQuestionIndex].text }}</div>
       <select v-model="selectedOption">
-        <option disabled value="">-- select an option --</option>
-        <option v-for="(option, index) in questions[currentQuestionIndex].options" 
-                :key="index" 
-                :value="index">
-          {{ option }}
-        </option>
-      </select>
+  <option disabled value="">-- select an option --</option>
+  <option v-for="option in questions[currentQuestionIndex].options" 
+          :key="option.id" 
+          :value="option">
+    {{ option.text }}
+  </option>
+</select>
       <button @click="submitResponse">Suivant</button>
       <button v-if="currentQuestionIndex > 0" @click="prevQuestion">Retour</button>
     </div>
 
     <!-- Responses Summary Table -->
     <div v-if="isSurveyComplete">
-      <div>Questionnaire terminé. Réponses:</div>
+      <div>Questionnaire terminé.</div>
       <button @click="downloadAsCSV">Télécharger Excel</button>
       <button @click="startNewSet">Démarrer nouveau questionnaire</button>
     </div>
@@ -36,14 +36,14 @@
 
 <script setup>
 import { ref } from 'vue';
+import { plaques, postes, typeVehicule } from './Reponses/reponses'
 
 // Questions array
 const questions = ref([
-  { text: 'Question 1', options: ['Option 1', 'Option 2', 'Option 3'] },
-  { text: 'Question 2', options: ['Option 1', 'Option 2', 'Option 3'] },
-  { text: 'Question 3', options: ['Option 1', 'Option 2', 'Option 3'] },
-  { text: 'Question 4', options: ['Option 1', 'Option 2', 'Option 3','Option 4', 'Option 5', 'Option 6'] },
-
+  { text: 'Poste', options: postes },
+  { text: 'Plaques', options: plaques },
+  { text: 'Type de véhicule', options: typeVehicule },
+  // { text: 'Question 4', options: ['Option 1', 'Option 2', 'Option 3','Option 4', 'Option 5', 'Option 6'] },
   // Add more questions as needed
 ]);
 
@@ -86,7 +86,7 @@ const startSurvey = () => {
 // Submit response and move to next question
 const submitResponse = () => {
   if (selectedOption.value !== null) {
-    responses.value[currentQuestionIndex.value] = selectedOption.value;
+    responses.value[currentQuestionIndex.value] = selectedOption.value.id;
     if (currentQuestionIndex.value === questions.value.length - 1) {
       finishTime.value = new Date();
       allResponses.value.push({
@@ -143,11 +143,13 @@ const downloadAsCSV = () => {
 
         allResponses.value.forEach((set, setIndex) => {
     csvContent += `${setIndex + 1},"${set.id}","${set.surveyor}","${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
-    set.responses.forEach((response, qIndex) => {
-      csvContent += `"${questions.value[qIndex].options[response]}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
+    set.responses.forEach((responseID, qIndex) => {
+      // Find the option text by the response ID
+      const optionId = questions.value[qIndex].options.find(opt => opt.id === responseID)?.id || 'N/A';
+      csvContent += `"${optionId}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
     });
     csvContent += `,"${formatTime(set.finishTime)}"\r\n`;
-        });
+  });
   
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
