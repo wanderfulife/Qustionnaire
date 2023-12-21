@@ -67,6 +67,12 @@ const finishTime = ref(null);
 
 const isSurveyComplete = ref(false); // New state variable
 
+const generateUUID = () => {
+  const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
+};
+
+
 const startSurvey = () => {
   if (surveyorName.value) {
     currentQuestionIndex.value = 0;
@@ -84,6 +90,7 @@ const submitResponse = () => {
     if (currentQuestionIndex.value === questions.value.length - 1) {
       finishTime.value = new Date();
       allResponses.value.push({
+        id: generateUUID(),
         surveyor: surveyorName.value,
         startTime: startTime.value,
         responses: [...responses.value],
@@ -116,7 +123,7 @@ const prevQuestion = () => {
 
 const downloadAsCSV = () => {
   let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += 'Ordre,Nom de l’enquêteur,Date,Heure Début,';
+  csvContent += 'Ordre,ID,Nom de l’enquêteur,Date,Heure Début,';
   questions.value.forEach((question, index) => {
     csvContent += `"${question.text}"${index < questions.value.length - 1 ? ',' : ''}`;
   });
@@ -134,14 +141,14 @@ const downloadAsCSV = () => {
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
   };
 
-      allResponses.value.forEach((set, setIndex) => {
-    csvContent += `${setIndex + 1},"${set.surveyor}","${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
+        allResponses.value.forEach((set, setIndex) => {
+    csvContent += `${setIndex + 1},"${set.id}","${set.surveyor}","${formatDate(set.startTime)}","${formatTime(set.startTime)}",`;
     set.responses.forEach((response, qIndex) => {
       csvContent += `"${questions.value[qIndex].options[response]}"${qIndex < questions.value.length - 1 ? ',' : ''}`;
     });
     csvContent += `,"${formatTime(set.finishTime)}"\r\n`;
-  });
-
+        });
+  
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
